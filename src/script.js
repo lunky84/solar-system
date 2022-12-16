@@ -42,6 +42,63 @@ const axesHelper = new THREE.AxesHelper(25);
 scene.add(axesHelper);
 
 /**
+ * Textures
+ */
+const textureLoader = new THREE.TextureLoader();
+const particleTexture = textureLoader.load("/textures/particles/1.png");
+
+/**
+ * Particles
+ */
+const v = new THREE.Vector3();
+
+function randomPointInSphere(radius) {
+  const x = THREE.Math.randFloat(-1, 1);
+  const y = THREE.Math.randFloat(-1, 1);
+  const z = THREE.Math.randFloat(-1, 1);
+  const normalizationFactor = 1 / Math.sqrt(x * x + y * y + z * z);
+
+  v.x = x * normalizationFactor * radius;
+  v.y = y * normalizationFactor * radius;
+  v.z = z * normalizationFactor * radius;
+
+  return v;
+}
+
+const particlesGeometry = new THREE.BufferGeometry();
+
+var positions = [];
+
+for (var i = 0; i < 5000; i++) {
+  var vertex = randomPointInSphere(500);
+  positions.push(vertex.x, vertex.y, vertex.z);
+}
+
+particlesGeometry.setAttribute(
+  "position",
+  new THREE.Float32BufferAttribute(positions, 3)
+);
+
+const particlesMaterial = new THREE.PointsMaterial({
+  color: 0xffffff,
+  size: Math.random(),
+});
+
+particlesMaterial.sizeAttenuation = true;
+
+particlesMaterial.color = new THREE.Color("#ffffff");
+
+particlesMaterial.transparent = true;
+particlesMaterial.alphaMap = particleTexture;
+// particlesMaterial.alphaTest = 0.01
+// particlesMaterial.depthTest = false
+particlesMaterial.depthWrite = false;
+particlesMaterial.blending = THREE.AdditiveBlending;
+
+const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+scene.add(particles);
+
+/**
  * Sizes
  */
 const sizes = {
@@ -80,8 +137,8 @@ scene.add(pointLight);
 const camera = new THREE.PerspectiveCamera(
   75,
   sizes.width / sizes.height,
-  0.1,
-  100
+  0.01,
+  1000
 );
 camera.position.x = 10;
 camera.position.y = 0;
@@ -103,6 +160,7 @@ const sun = new THREE.Mesh(
   new THREE.SphereGeometry(1.5, 100, 100),
   new THREE.MeshBasicMaterial({ map: sunTexture })
 );
+sun.name = "sun";
 scene.add(sun);
 
 /**
@@ -118,6 +176,7 @@ const material = new THREE.MeshStandardMaterial({
 });
 const earth = new THREE.Mesh(geometry, material);
 earth.position.x = 10;
+earth.name = "earth";
 
 earthOrbitGroup.add(earth);
 
@@ -138,6 +197,7 @@ const moon = new THREE.Mesh(
   moonMaterial
 );
 moon.position.x = 3;
+moon.name = "moon";
 
 moonOrbitGroup.add(moon);
 earthOrbitGroup.add(moonOrbitGroup);
@@ -196,3 +256,35 @@ const tick = () => {
 };
 
 tick();
+
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
+canvas.addEventListener("click", function (event) {
+  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  // update the picking ray with the camera and pointer position
+  raycaster.setFromCamera(pointer, camera);
+
+  // calculate objects intersecting the picking ray
+
+  const clickableObjects = [
+    scene.getObjectByName("sun"),
+    scene.getObjectByName("earth"),
+    scene.getObjectByName("moon"),
+  ];
+  const intersects = raycaster.intersectObjects(clickableObjects);
+
+  console.log(intersects);
+  if (intersects.length) {
+    console.log(intersects[0].object.name);
+  }
+
+  // Change color example works with MeshBasicMaterial
+  // for (let i = 0; i < intersects.length; i++) {
+  //   intersects[i].object.material.color.set(0x00ff00);
+  // }
+
+  renderer.render(scene, camera);
+});
