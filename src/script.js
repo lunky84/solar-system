@@ -12,10 +12,12 @@ const options = {
   speed: 1,
   ambientLight: 0.3,
   axesHelper: true,
+  starParticles: true,
 };
 
 gui.add(options, "speed", 1, 6, 1).name("Speed");
 gui.add(options, "axesHelper").name("AxesHelper");
+gui.add(options, "starParticles").name("Star Particles");
 gui.add(options, "ambientLight", 0, 1, 0.1).name("Ambient light");
 
 // How many seconds to complete 1x earth rotation
@@ -95,8 +97,8 @@ particlesMaterial.alphaMap = particleTexture;
 particlesMaterial.depthWrite = false;
 particlesMaterial.blending = THREE.AdditiveBlending;
 
-const particles = new THREE.Points(particlesGeometry, particlesMaterial);
-scene.add(particles);
+const starParticles = new THREE.Points(particlesGeometry, particlesMaterial);
+scene.add(starParticles);
 
 /**
  * Sizes
@@ -124,10 +126,10 @@ window.addEventListener("resize", () => {
  * Lights
  */
 
-const ambientLight = new THREE.AmbientLight(0xfffffff, options.ambientLight);
+const ambientLight = new THREE.AmbientLight(0xffffff, options.ambientLight);
 scene.add(ambientLight);
 
-const pointLight = new THREE.PointLight(0xfffffff, 1);
+const pointLight = new THREE.PointLight(0xffffff, 1);
 scene.add(pointLight);
 
 /**
@@ -246,6 +248,12 @@ const tick = () => {
     scene.add(axesHelper);
   } else {
     scene.remove(axesHelper);
+  }
+
+  if (options.starParticles) {
+    scene.add(starParticles);
+  } else {
+    scene.remove(starParticles);
   }
 
   // Render
